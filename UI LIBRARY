@@ -1,0 +1,153 @@
+local UI = {}
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Create a ScreenGui to hold all UI elements
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ZombiesUI"
+screenGui.Parent = playerGui
+
+-- Main container for UI elements
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 400)
+mainFrame.Position = UDim2.new(0, 10, 0, 60) -- Adjusted to make space for the title
+mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.Parent = screenGui
+
+-- Table to store all buttons for navigation
+local buttons = {}
+local selectedIndex = 1
+
+-- Function to create a title
+function UI.CreateTitle(text)
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, 0, 0, 50)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = text
+    titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextSize = 24 -- Bigger text size
+    titleLabel.TextStrokeTransparency = 0 -- Enable text outline
+    titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- Black outline
+    titleLabel.TextStrokeThickness = 2 -- Thick outline
+    titleLabel.Parent = screenGui
+    return titleLabel
+end
+
+-- Function to create a button
+function UI.CreateButton(name, text, position)
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = name
+    toggleButton.Size = UDim2.new(0.9, 0, 0, 30)
+    toggleButton.Position = position
+    toggleButton.BackgroundTransparency = 0.7
+    toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+    toggleButton.BorderSizePixel = 2
+    toggleButton.BorderColor3 = Color3.new(1, 1, 1) -- White outline
+    toggleButton.Text = "   " .. text -- Add padding to the left
+    toggleButton.TextColor3 = Color3.new(1, 1, 1)
+    toggleButton.Font = Enum.Font.SourceSans
+    toggleButton.TextSize = 14
+    toggleButton.TextXAlignment = Enum.TextXAlignment.Left -- Left-align text
+    toggleButton.Parent = mainFrame
+
+    -- Hover effects
+    toggleButton.MouseEnter:Connect(function()
+        toggleButton.BackgroundTransparency = 0
+        toggleButton.BackgroundColor3 = Color3.new(1, 1, 1)
+        toggleButton.TextColor3 = Color3.new(0, 0, 0)
+        toggleButton.Size = UDim2.new(0.92, 0, 0, 32)
+        toggleButton.BorderSizePixel = 3
+        toggleButton.BorderColor3 = Color3.new(0, 0.5, 1) -- Blue outline
+    end)
+
+    toggleButton.MouseLeave:Connect(function()
+        toggleButton.BackgroundTransparency = 0.7
+        toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+        toggleButton.TextColor3 = Color3.new(1, 1, 1)
+        toggleButton.Size = UDim2.new(0.9, 0, 0, 30)
+        toggleButton.BorderSizePixel = 2
+        toggleButton.BorderColor3 = Color3.new(1, 1, 1) -- White outline
+    end)
+
+    -- Add button to the buttons table for navigation
+    table.insert(buttons, toggleButton)
+    return toggleButton
+end
+
+-- Function to create a label
+function UI.CreateLabel(name, text, position)
+    local label = Instance.new("TextLabel")
+    label.Name = name
+    label.Size = UDim2.new(0.9, 0, 0, 20)
+    label.Position = position
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = mainFrame
+    return label
+end
+
+-- Function to update button selection
+local function updateSelection()
+    for i, button in ipairs(buttons) do
+        if i == selectedIndex then
+            button.BackgroundTransparency = 0
+            button.BackgroundColor3 = Color3.new(1, 1, 1)
+            button.TextColor3 = Color3.new(0, 0, 0)
+            button.Size = UDim2.new(0.92, 0, 0, 32)
+            button.BorderSizePixel = 3
+            button.BorderColor3 = Color3.new(0, 0.5, 1) -- Blue outline
+        else
+            button.BackgroundTransparency = 0.7
+            button.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+            button.TextColor3 = Color3.new(1, 1, 1)
+            button.Size = UDim2.new(0.9, 0, 0, 30)
+            button.BorderSizePixel = 2
+            button.BorderColor3 = Color3.new(1, 1, 1) -- White outline
+        end
+    end
+end
+
+-- Enable arrow key navigation
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if screenGui.Enabled then
+        if input.KeyCode == Enum.KeyCode.Up then
+            selectedIndex = selectedIndex - 1
+            if selectedIndex < 1 then
+                selectedIndex = #buttons
+            end
+            updateSelection()
+        elseif input.KeyCode == Enum.KeyCode.Down then
+            selectedIndex = selectedIndex + 1
+            if selectedIndex > #buttons then
+                selectedIndex = 1
+            end
+            updateSelection()
+        elseif input.KeyCode == Enum.KeyCode.Return or input.KeyCode == Enum.KeyCode.Space then
+            buttons[selectedIndex]:Activate()
+        end
+    end
+
+    -- Toggle UI with F7
+    if input.KeyCode == Enum.KeyCode.F7 then
+        screenGui.Enabled = not screenGui.Enabled
+        if screenGui.Enabled then
+            selectedIndex = 1
+            updateSelection()
+        end
+    end
+end)
+
+return UI
