@@ -6,25 +6,21 @@ local playerGui = player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Create a ScreenGui to hold all UI elements
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ZombiesUI"
 screenGui.Parent = playerGui
 
--- Main container for UI elements
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0, 10, 0, 60) -- Adjusted to make space for the title
+mainFrame.Position = UDim2.new(0, 10, 0, 60)
 mainFrame.BackgroundColor3 = Color3.new(0, 0, 0)
 mainFrame.BackgroundTransparency = 0.3
 mainFrame.Parent = screenGui
 
--- Table to store all buttons for navigation
 local buttons = {}
 local selectedIndex = 1
 
--- Function to create a title
 function UI.CreateTitle(text)
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "TitleLabel"
@@ -32,17 +28,16 @@ function UI.CreateTitle(text)
     titleLabel.Position = UDim2.new(0, 0, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = text
-    titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
     titleLabel.Font = Enum.Font.SourceSansBold
-    titleLabel.TextSize = 24 -- Bigger text size
-    titleLabel.TextStrokeTransparency = 0 -- Enable text outline
-    titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- Black outline
-    titleLabel.TextStrokeThickness = 2 -- Thick outline
+    titleLabel.TextSize = 24
+    titleLabel.TextStrokeTransparency = 0
+    titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    titleLabel.TextStrokeThickness = 2
     titleLabel.Parent = screenGui
     return titleLabel
 end
 
--- Function to create a button
 function UI.CreateButton(name, text, position)
     local toggleButton = Instance.new("TextButton")
     toggleButton.Name = name
@@ -51,22 +46,21 @@ function UI.CreateButton(name, text, position)
     toggleButton.BackgroundTransparency = 0.7
     toggleButton.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
     toggleButton.BorderSizePixel = 2
-    toggleButton.BorderColor3 = Color3.new(1, 1, 1) -- White outline
-    toggleButton.Text = "   " .. text -- Add padding to the left
+    toggleButton.BorderColor3 = Color3.new(1, 1, 1)
+    toggleButton.Text = "   " .. text
     toggleButton.TextColor3 = Color3.new(1, 1, 1)
     toggleButton.Font = Enum.Font.SourceSans
     toggleButton.TextSize = 14
-    toggleButton.TextXAlignment = Enum.TextXAlignment.Left -- Left-align text
+    toggleButton.TextXAlignment = Enum.TextXAlignment.Left
     toggleButton.Parent = mainFrame
 
-    -- Hover effects
     toggleButton.MouseEnter:Connect(function()
         toggleButton.BackgroundTransparency = 0
         toggleButton.BackgroundColor3 = Color3.new(1, 1, 1)
         toggleButton.TextColor3 = Color3.new(0, 0, 0)
         toggleButton.Size = UDim2.new(0.92, 0, 0, 32)
         toggleButton.BorderSizePixel = 3
-        toggleButton.BorderColor3 = Color3.new(0, 0.5, 1) -- Blue outline
+        toggleButton.BorderColor3 = Color3.new(0, 0.5, 1)
     end)
 
     toggleButton.MouseLeave:Connect(function()
@@ -75,15 +69,13 @@ function UI.CreateButton(name, text, position)
         toggleButton.TextColor3 = Color3.new(1, 1, 1)
         toggleButton.Size = UDim2.new(0.9, 0, 0, 30)
         toggleButton.BorderSizePixel = 2
-        toggleButton.BorderColor3 = Color3.new(1, 1, 1) -- White outline
+        toggleButton.BorderColor3 = Color3.new(1, 1, 1)
     end)
 
-    -- Add button to the buttons table for navigation
     table.insert(buttons, toggleButton)
     return toggleButton
 end
 
--- Function to create a label
 function UI.CreateLabel(name, text, position)
     local label = Instance.new("TextLabel")
     label.Name = name
@@ -99,7 +91,43 @@ function UI.CreateLabel(name, text, position)
     return label
 end
 
--- Function to update button selection
+function UI.CreateDropdown(name, text, position, options)
+    local dropdownButton = UI.CreateButton(name, text, position)
+    local dropdownOpen = false
+    local dropdownFrame = Instance.new("Frame")
+    dropdownFrame.Name = "DropdownFrame"
+    dropdownFrame.Size = UDim2.new(0.9, 0, 0, #options * 30)
+    dropdownFrame.Position = UDim2.new(0.05, 0, position.Y.Scale + 0.05, 0)
+    dropdownFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+    dropdownFrame.BackgroundTransparency = 0.7
+    dropdownFrame.BorderSizePixel = 2
+    dropdownFrame.BorderColor3 = Color3.new(1, 1, 1)
+    dropdownFrame.Visible = false
+    dropdownFrame.Parent = mainFrame
+
+    for i, option in ipairs(options) do
+        local optionButton = UI.CreateButton("Option" .. i, option.Text, UDim2.new(0, 0, (i - 1) * 0.33, 0))
+        optionButton.Parent = dropdownFrame
+        optionButton.MouseButton1Click:Connect(function()
+            dropdownFrame.Visible = false
+            dropdownButton.Text = text .. " ▼"
+            option.Callback()
+        end)
+    end
+
+    dropdownButton.MouseButton1Click:Connect(function()
+        dropdownOpen = not dropdownOpen
+        dropdownFrame.Visible = dropdownOpen
+        if dropdownOpen then
+            dropdownButton.Text = text .. " ▲"
+        else
+            dropdownButton.Text = text .. " ▼"
+        end
+    end)
+
+    return dropdownButton
+end
+
 local function updateSelection()
     for i, button in ipairs(buttons) do
         if i == selectedIndex then
@@ -108,19 +136,18 @@ local function updateSelection()
             button.TextColor3 = Color3.new(0, 0, 0)
             button.Size = UDim2.new(0.92, 0, 0, 32)
             button.BorderSizePixel = 3
-            button.BorderColor3 = Color3.new(0, 0.5, 1) -- Blue outline
+            button.BorderColor3 = Color3.new(0, 0.5, 1)
         else
             button.BackgroundTransparency = 0.7
             button.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
             button.TextColor3 = Color3.new(1, 1, 1)
             button.Size = UDim2.new(0.9, 0, 0, 30)
             button.BorderSizePixel = 2
-            button.BorderColor3 = Color3.new(1, 1, 1) -- White outline
+            button.BorderColor3 = Color3.new(1, 1, 1)
         end
     end
 end
 
--- Enable arrow key navigation
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if screenGui.Enabled then
         if input.KeyCode == Enum.KeyCode.Up then
@@ -140,7 +167,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 
-    -- Toggle UI with F7
     if input.KeyCode == Enum.KeyCode.F7 then
         screenGui.Enabled = not screenGui.Enabled
         if screenGui.Enabled then
